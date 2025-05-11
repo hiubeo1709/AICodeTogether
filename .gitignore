@@ -1,0 +1,18 @@
+# Không upload môi trường ảo
+venv/
+
+# Không upload file bytecode
+__pycache__/
+*.py[cod]
+*.so
+
+# Không upload dữ liệu và mô hình
+data/
+*.pt
+
+# Không upload notebook checkpoints nếu có
+.ipynb_checkpoints/
+
+# Không upload file hệ thống
+.DS_Store
+Thumbs.db
