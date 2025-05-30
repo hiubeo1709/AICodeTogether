@@ -10,7 +10,7 @@ class Tokenizer:
     def __init__(self):
         self.tokenizer = HuggingFaceTokenizer(BPE(unk_token="<unk>"))
         self.tokenizer.pre_tokenizer = Whitespace()
-        self.special_tokens = ["<pad>", "<sos>", "<eos>", "<unk>", " "]
+        self.special_tokens = ["<pad>", "<sos>", "<eos>", "<unk>", " ", "<block>", "<line>"]
         self.vocab = {}
         self.token_to_idx = {}
         self.idx_to_token = {}
@@ -23,7 +23,7 @@ class Tokenizer:
     def build_vocab(self, train_data):
         cleaned_data = [self.remove_comments(code) for code in train_data if code.strip()]
         trainer = BpeTrainer(
-            vocab_size=15000,
+            vocab_size=25000,
             special_tokens=self.special_tokens,
             min_frequency=2
         )
@@ -50,6 +50,17 @@ class Tokenizer:
         if tokens and tokens[-1] == "<eos>":
             tokens = tokens[:-1]
         return tokens
+    
+    def tag_variable_declarations(code: str) -> str:
+    # Bắt mọi loại khai báo kiểu Java: int x, Scanner input, List<String> items, MyClass obj
+        pattern = r'(\b(?:[A-Z_a-z][\w<>?,\s]*)\b)\s+([A-Z_a-z][\w]*)\b'
+        
+        def replacer(match):
+            type_part = match.group(1)
+            var_name = match.group(2)
+            return f"{type_part} <var>{var_name}<var>"
+
+        return re.sub(pattern, replacer, code)
 
     def encode(self, code: str) -> list[int]:
         cleaned_code = self.remove_comments(code)
@@ -74,7 +85,7 @@ class Tokenizer:
             tokens = tokens[tokens.index("<sos>") + 1:]
         result = ""
         for token in tokens:
-            if token in ["<pad>", "<unk>", "<sos>", "<eos>"]:
+            if token in ["<pad>", "<unk>", "<sos>", "<eos>", "<block>", "<line>"]:
                 continue
             result += token
         return result if result else "[No valid tokens generated]"
